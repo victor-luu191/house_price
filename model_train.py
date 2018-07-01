@@ -18,21 +18,64 @@ def to_file_name(s):
 
 
 class Trainer():
-    def __init__(self, X, y, test_ratio, stratify=None):
+    def __init__(self, train_df, validation_ratio, cat_feats=None, stratify=None):
 
-        self.features = X.columns
+        # limit to only interested features
+        cols = self.choose_features(train_df, cat_feats) + ['SalePrice']
+        compact_train = train_df[cols]
+
+        # drop NAs
+        compact_train.dropna(subset=self.features, inplace=True)
+
+        X = compact_train.drop('SalePrice', axis='columns')
+        y = compact_train['SalePrice']
+
+        # split into two parts: train and validation
         if not stratify:
-            X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=test_ratio, random_state=SEED)
+            X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=validation_ratio, random_state=SEED)
         else:
-            X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=test_ratio, stratify=stratify, random_state=SEED)
+            X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=validation_ratio, stratify=stratify,
+                                                                  random_state=SEED)
 
         self.X_train, self.y_train = X_train, y_train
         self.X_valid, self.y_valid = X_valid, y_valid
 
         lin_models = set_linear_models()
         tree_models = set_tree_models()
-        self.models = {**lin_models, **tree_models} # join two dicts
+        self.models = {**lin_models, **tree_models}  # join two dicts
         self.predictions = dict()
+
+    def choose_features(self, X, cat_feats=None):
+        '''
+        Choose features to be used as predictors from:
+        + numerical feats
+        + categorical feats
+        :param cat_feats:
+        :param X:
+        :return:
+        '''
+        self.numerical_feats = ['LotArea', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd', 'age_in_year',
+                                'years_from_remodel']
+        self.features = self.numerical_feats
+
+        if cat_feats:
+            for cf in cat_feats:
+                self.add_derived_feats(cf, X)
+
+        print('features used for training models: {}'.format(self.features))
+        return self.features
+
+    def add_derived_feats(self, cat_feat, df):
+        '''
+        Include the given categorical feature
+        :param df:
+        :param cat_feat: given categorical feature
+        :return:
+        '''
+
+        print('include categorical feature {}'.format(cat_feat))
+        derived_feats = [ff for ff in df.columns if '{}_'.format(cat_feat) in ff]
+        self.features = self.features + derived_feats
 
     def benchmark(self, metrics_file, pred_file):
 
@@ -100,26 +143,6 @@ def set_tree_models():
     return dict(zip(tree_names, tree_predictors))
 
 
-def choose_features(df, cat_feat):
-    '''
-    Choose features to be used as predictors, include the given categorical feature (if any)
-    :param df:
-    :param cat_feat: given categorical feature
-    :return:
-    '''
-    numerical_feats = ['LotArea', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd',
-                       'age_in_year', 'years_from_remodel']
-    if cat_feat != '':
-        print('include categorical feature {}'.format(cat_feat))
-
-        derived_feats = [ff for ff in df.columns if '{}_'.format(cat_feat) in ff]
-        feats = numerical_feats + derived_feats
-    else:
-        feats = numerical_feats
-
-    return feats
-
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--input_file',
@@ -133,6 +156,7 @@ def parse_args():
 
     return parser.parse_args()
 
+
 if __name__ == '__main__':
     # args = parse_args()
     # input_file = os.path.join(DAT_DIR, vars(args)['input_file'])
@@ -143,19 +167,14 @@ if __name__ == '__main__':
     data_all = pd.read_csv(input_file)
     print('loaded all data')
 
-    n_train, n_test = 1460, 1459  # TODO replace these hard code values
-    train = data_all.iloc[:n_train]
 
-    cat_feat = 'Neighborhood' # '
-    feats = choose_features(data_all, cat_feat)
-    print('features used for training models: {}'.format(feats))
+    train = data_all[data_all['SalePrice'].notnull()]
+    print('# rows in train data: {}'.format(train.shape[0]))
 
-    cols = feats + ['SalePrice']
-    valid_train = train[cols].dropna()
+    trainer = Trainer(train_df=train, validation_ratio=0.1,
+                      cat_feats=['Neighborhood', 'MSZoning'])
 
-    trainer = Trainer(X=valid_train[feats], y=valid_train['SalePrice'], test_ratio=0.1)
     metrics_file = os.path.join(RES_DIR, 'metrics.csv')  # 'metrics_{}.csv'.format(cat_feat)
-    pred_file = os.path.join(RES_DIR, 'validation.csv') # 'validation_{}.csv'.format(cat_feat)
+    pred_file = os.path.join(RES_DIR, 'validation.csv')  # 'validation_{}.csv'.format(cat_feat)
 
     trainer.benchmark(metrics_file, pred_file)
-
