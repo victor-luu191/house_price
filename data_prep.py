@@ -33,6 +33,24 @@ def load_full_form(fname):
     return full_form
 
 
+def to_quantitative(text_feat, df, scoring):
+    '''
+    Given a feature stored in data as text but actually a quantitative feat, convert it to numerical values
+    via given encoding
+    :param scoring:
+    :param text_feat:
+    :return:
+    '''
+    print('\t {}'.format(text_feat))
+    n_na = sum(df[text_feat].isnull())
+    print('\t Column {} has {} NAs, they will be filled by forward filling'.format(text_feat, n_na))
+
+    res = df.copy()
+    res[text_feat].fillna(method='ffill', inplace=True)
+    res['{}_score'.format(text_feat)] = res[text_feat].apply(lambda form: scoring[form])
+    return res
+
+
 if __name__ == '__main__':
     train = pd.read_csv(os.path.join(DAT_DIR, 'train.csv'))
     test = pd.read_csv(os.path.join(DAT_DIR, 'test.csv'))
@@ -48,13 +66,31 @@ if __name__ == '__main__':
     data_all['age_in_year'] = data_all['YrSold'] - data_all['YearBuilt']
     data_all['years_from_remodel'] = data_all['YrSold'] - data_all['YearRemodAdd']
 
+    print('\n Onehot encodings...')
     data_all = onehot_encode('Neighborhood', data_all)
     zone_full = load_full_form('zones.csv')
     data_all = to_full('MSZoning', data_all, zone_full)
     data_all = onehot_encode('full_MSZoning', data_all)
 
+    print('\n Encoding quantitative text features...')
+    score_dict = {
+        "Utilities": {"AllPub": 4, "NoSewr": 3, "NoSeWa": 2, "ELO": 1},
+        "ExterQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1},
+        "ExterCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1},
+        "HeatingQC": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1}
+    }
+    # "BsmtQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
+    # "BsmtCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
+    # "BsmtExposure": {"Gd": 5, "Av": 4, "Mn": 3, "No": 2, "NA": 1},
+    # "BsmtFinType1": {"GLQ": 6, "ALQ": 5, "BLQ": 4, "Rec": 3, "LwQ": 2, "Unf": 1, "NA": 0},
+    for tf in score_dict.keys():
+        data_all = to_quantitative(text_feat=tf, df=data_all, scoring=score_dict[tf])
+
     ## End of preprocesses ==================
     print('Shape of data_all after all preprocessing: {}'.format(data_all.shape))
+    score_feats = [cc for cc in data_all.columns if '_score' in cc]
+    print('Sample of features with score:')
+    print(data_all[score_feats].head())
 
     fname = os.path.join(DAT_DIR, 'data_all.csv')
     data_all.to_csv(fname, index=False)
