@@ -1,21 +1,26 @@
 import argparse
-import os
-import pandas as pd
-import numpy as np
+
+import sklearn.metrics as metrics
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from xgboost import XGBRegressor
-import sklearn.metrics as metrics
+from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split
+from xgboost import XGBRegressor
 
+from predict import Predictor
 from setting import *
 
 SEED = 1
 
 
+def to_file_name(s):
+    return s.replace(' ', '_').lower()
+
+
 class Trainer():
     def __init__(self, X, y, test_ratio, stratify=None):
 
+        self.features = X.columns
         if not stratify:
             X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=test_ratio, random_state=SEED)
         else:
@@ -45,10 +50,12 @@ class Trainer():
 
         return None
 
-    def eval(self, predictor, name):
-        predictor.fit(self.X_train, self.y_train)
-        y_pred = predictor.predict(self.X_valid)
+    def eval(self, model, name):
 
+        model.fit(self.X_train, self.y_train)
+        self.dump_predictor(model, name)
+
+        y_pred = model.predict(self.X_valid)
         self.predictions[name] = y_pred
 
         try:
@@ -56,6 +63,12 @@ class Trainer():
             return error
         except ValueError as e:
             return np.nan
+
+    def dump_predictor(self, model, name):
+        predictor_file = os.path.join(MODEL_DIR, '{}.pkl'.format(to_file_name(name)))
+        predictor = Predictor(model, self.features)
+        joblib.dump(predictor, predictor_file)
+        print('dumped trained predictor {} to file {}'.format(name, predictor_file))
 
     def retrieve_predictions(self):
         predict_df = self.X_valid
@@ -94,12 +107,13 @@ def choose_features(df, cat_feat):
     :param cat_feat: given categorical feature
     :return:
     '''
-    numerical_feats = ['LotArea', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd'
-                       ]    # 'age_in_year', 'years_from_remodel'
+    numerical_feats = ['LotArea', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd',
+                       'age_in_year', 'years_from_remodel']
     if cat_feat != '':
         print('include categorical feature {}'.format(cat_feat))
-        area_feats = [ff for ff in df.columns if '{}_'.format(cat_feat) in ff]
-        feats = numerical_feats + area_feats
+
+        derived_feats = [ff for ff in df.columns if '{}_'.format(cat_feat) in ff]
+        feats = numerical_feats + derived_feats
     else:
         feats = numerical_feats
 
@@ -132,7 +146,7 @@ if __name__ == '__main__':
     n_train, n_test = 1460, 1459  # TODO replace these hard code values
     train = data_all.iloc[:n_train]
 
-    cat_feat = '' # 'Neighborhood'
+    cat_feat = 'Neighborhood' # '
     feats = choose_features(data_all, cat_feat)
     print('features used for training models: {}'.format(feats))
 
@@ -140,8 +154,8 @@ if __name__ == '__main__':
     valid_train = train[cols].dropna()
 
     trainer = Trainer(X=valid_train[feats], y=valid_train['SalePrice'], test_ratio=0.1)
-    metrics_file = os.path.join(RES_DIR, 'metrics_origin.csv')  # 'metrics_{}.csv'.format(cat_feat)
-    pred_file = os.path.join(RES_DIR, 'predictions_origin.csv') # 'predictions_{}.csv'.format(cat_feat)
+    metrics_file = os.path.join(RES_DIR, 'metrics.csv')  # 'metrics_{}.csv'.format(cat_feat)
+    pred_file = os.path.join(RES_DIR, 'validation.csv') # 'validation_{}.csv'.format(cat_feat)
 
     trainer.benchmark(metrics_file, pred_file)
 
