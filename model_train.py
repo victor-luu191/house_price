@@ -13,22 +13,19 @@ from setting import *
 SEED = 1
 
 
-def to_file_name(s):
-    return s.replace(' ', '_').lower()
-
-
-def to_score_feats(quant_feats):
-    return [qf + '_score' for qf in quant_feats]
-
 class Trainer():
-    def __init__(self, train_df, validation_ratio, cat_feats=None, quant_feats=None, stratify=None):
-
+    def __init__(self, data, validation_ratio, cat_feats=None, quant_feats=None, stratify=None):
         # limit to only interested features
-        cols = self.choose_features(train_df, cat_feats, quant_feats) + ['SalePrice']
-        compact_train = train_df[cols]
+        features = self.choose_features(data, cat_feats, quant_feats)
+        cols = features + ['SalePrice']
 
-        # drop NAs
-        compact_train.dropna(subset=self.features, inplace=True)
+        # fill NA in both train and test
+        print('Fill NAs in features by 0')
+        data[features].fillna(0, inplace=True)
+
+        train = data[data['SalePrice'].notnull()]
+        print('# rows in train data: {}'.format(train.shape[0]))
+        compact_train = train[cols]
 
         X = compact_train.drop('SalePrice', axis='columns')
         y = compact_train['SalePrice']
@@ -169,6 +166,14 @@ def parse_args():
     return parser.parse_args()
 
 
+def to_file_name(s):
+    return s.replace(' ', '_').lower()
+
+
+def to_score_feats(quant_feats):
+    return [qf + '_score' for qf in quant_feats]
+
+
 if __name__ == '__main__':
     # args = parse_args()
     # input_file = os.path.join(DAT_DIR, vars(args)['input_file'])
@@ -176,16 +181,11 @@ if __name__ == '__main__':
     # pred_file = os.path.join(RES_DIR, vars(args)['pred_file'])
 
     input_file = os.path.join(DAT_DIR, 'data_all.csv')
-    data_all = pd.read_csv(input_file)
+    data = pd.read_csv(input_file)
     print('loaded all data')
 
-    train = data_all[data_all['SalePrice'].notnull()]
-    print('# rows in train data: {}'.format(train.shape[0]))
-
-    trainer = Trainer(train_df=train, validation_ratio=0.1,
-                      cat_feats=['Neighborhood', 'full_MSZoning'],
-                      quant_feats=['Utilities', 'ExterQual', 'ExterCond', 'HeatingQC']
-                      )
+    trainer = Trainer(data=data, validation_ratio=0.1, cat_feats=['Neighborhood', 'full_MSZoning'],
+                      quant_feats=['Utilities', 'ExterQual', 'ExterCond', 'HeatingQC'])
 
     metrics_file = os.path.join(RES_DIR, 'metrics.csv')  # 'metrics_{}.csv'.format(cat_feat)
     pred_file = os.path.join(RES_DIR, 'validation.csv')  # 'validation_{}.csv'.format(cat_feat)
