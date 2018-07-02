@@ -4,6 +4,67 @@ import numpy as np
 from setting import DAT_DIR
 
 
+class DataPrep():
+    '''
+    Data preprocessing object
+    '''
+
+    def __init__(self):
+        pass
+
+    def add_derived_feats(self, data_all):
+        print('Add derived features...')
+        data_all['age_in_year'] = data_all['YrSold'] - data_all['YearBuilt']
+        data_all['years_from_remodel'] = data_all['YrSold'] - data_all['YearRemodAdd']
+        return data_all
+
+    def choose_features(self, X, cat_feats=None, quant_feats=None):
+        '''
+        Choose features to be used as predictors from:
+        + numerical feats
+        + categorical feats
+        :param quant_feats:
+        :param cat_feats:
+        :param X:
+        :return:
+        '''
+        numerical_feats = ['LotArea', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd',
+                           'age_in_year', 'years_from_remodel',
+                           ]
+        area_feats = ['TotalBsmtSF',
+                      '1stFlrSF',
+                      '2ndFlrSF', ]
+        features = numerical_feats + area_feats
+
+        if cat_feats:
+            for cf in cat_feats:
+                features += get_onehot_features(cf, X)
+
+        if quant_feats:
+            print('Adding quantitative features')
+            features += to_score_feats(quant_feats)
+
+        print('features used for training models: {}'.format(features))
+        return features
+
+
+def get_onehot_features(cat_feat, df):
+    '''
+    Include the given categorical feature
+    :param df:
+    :param cat_feat: given categorical feature
+    :return:
+    '''
+
+    print('include categorical feature {}'.format(cat_feat))
+    onehot_features = [ff for ff in df.columns if '{}_'.format(cat_feat) in ff]
+    return onehot_features
+
+
+def to_score_feats(quant_feats):
+    return [qf + '_score' for qf in quant_feats]
+
+
 def join(train, test, response):
     test[response] = np.nan
     return pd.concat([train, test])
@@ -62,15 +123,11 @@ if __name__ == '__main__':
     response = 'SalePrice'
     data_all = join(train, test, response)
 
-    print('Add derived features...')
-    data_all['age_in_year'] = data_all['YrSold'] - data_all['YearBuilt']
-    data_all['years_from_remodel'] = data_all['YrSold'] - data_all['YearRemodAdd']
-
-    print('\n Onehot encodings...')
+    print('\n Onehot encoding categorical feats...')
     data_all = onehot_encode('Neighborhood', data_all)
-    zone_full = load_full_form('zones.csv')
-    data_all = to_full('MSZoning', data_all, zone_full)
-    data_all = onehot_encode('full_MSZoning', data_all)
+    # zone_full = load_full_form('zones.csv')
+    # data_all = to_full('MSZoning', data_all, zone_full)
+    data_all = onehot_encode('MSZoning', data_all)
 
     print('\n Encoding quantitative text features...')
     score_dict = {
@@ -86,6 +143,15 @@ if __name__ == '__main__':
 
     for tf in score_dict.keys():
         data_all = to_quantitative(text_feat=tf, df=data_all, scoring=score_dict[tf])
+
+    dp = DataPrep()
+    features = dp.choose_features(data_all,
+                                  cat_feats=['Neighborhood', 'full_MSZoning'],
+                                  quant_feats=['Utilities', 'ExterQual', 'ExterCond', 'HeatingQC'])
+
+    # fill NA in both train and test
+    print('Fill NAs in features by 0')
+    data_all[features].fillna(0, inplace=True)
 
     ## End of preprocesses ==================
     print('Shape of data_all after all preprocessing: {}'.format(data_all.shape))
