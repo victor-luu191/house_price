@@ -62,6 +62,8 @@ class DataPrep():
                       '1stFlrSF',
                       '2ndFlrSF', ]
         features = numerical_feats + area_feats
+        print('Starting set of features:')
+        print(features)
 
         if self.cat_feats:
             print('Adding onehot encoding of categorical features:')
@@ -81,8 +83,17 @@ class DataPrep():
     def fillna_all(self, data, value):
         # fill NA in both train and test
         print('Fill NAs in features by {}'.format(value))
-        data[self.features].fillna(0, inplace=True)
-        return data
+        copy = data.copy()
+        copy[self.features] = data[self.features].fillna(value)
+
+        # self.check_na(copy)
+        return copy
+
+    def check_na(self, df):
+        # check if any NA left
+        na_count = [sum(df[ff].isnull()) for ff in self.features]
+        print('features still have NA')
+        print(pd.DataFrame({'feature': self.features, 'na_count': na_count}).query('na_count > 0'))
 
     def dump(self):
         # for persistence of features
@@ -98,7 +109,6 @@ def get_onehot_features(cat_feat, df):
     :return:
     '''
 
-    print('include categorical feature {}'.format(cat_feat))
     onehot_features = [ff for ff in df.columns if '{}_'.format(cat_feat) in ff]
     return onehot_features
 
@@ -187,8 +197,9 @@ if __name__ == '__main__':
                   quant_feats=quant_feats,
                   scorings=scorings)
 
+    data_all = dp.add_derived_feats(data_all)
     data_all = dp.encode_cat_feats(data_all)
-    data_all = dp.quant_to_scores(scorings)
+    data_all = dp.quant_to_scores(data_all)
 
     dp.choose_features(data_all)
     data_all = dp.fillna_all(data_all, value=0)
