@@ -7,7 +7,7 @@ from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split
 from xgboost import XGBRegressor
 
-from data_prep import choose_features
+from data_prep import DataPrep
 from predict import Predictor
 from setting import *
 
@@ -15,14 +15,14 @@ SEED = 1
 
 
 class Trainer():
-    def __init__(self, data, validation_ratio, cat_feats=None, quant_feats=None, stratify=None):
+    def __init__(self, data, validation_ratio,
+                 data_prep: DataPrep,
+                 stratify=None):
         # limit to only interested features
 
-        features = choose_features(data, cat_feats, quant_feats)
+        features = data_prep.choose_features(data)
         self.features = features
         cols = features + ['SalePrice']
-
-
 
         train = data[data['SalePrice'].notnull()]
         print('# rows in train data: {}'.format(train.shape[0]))
@@ -137,10 +137,12 @@ if __name__ == '__main__':
     # pred_file = os.path.join(RES_DIR, vars(args)['pred_file'])
 
     input_file = os.path.join(DAT_DIR, 'data_all.csv')
-    data = pd.read_csv(input_file)
+    data_all = pd.read_csv(input_file)
     print('loaded all data')
 
-    trainer = Trainer(data=data, validation_ratio=0.1)
+    trainer = Trainer(data=data_all,
+                      validation_ratio=0.1,
+                      data_prep=data_prep)
 
     metrics_file = os.path.join(RES_DIR, 'metrics.csv')  # 'metrics_{}.csv'.format(cat_feat)
     pred_file = os.path.join(RES_DIR, 'validation.csv')  # 'validation_{}.csv'.format(cat_feat)
