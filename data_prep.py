@@ -1,6 +1,8 @@
 import pandas as pd
 import os
 import numpy as np
+from sklearn.externals import joblib
+
 from setting import DAT_DIR
 
 
@@ -9,23 +11,48 @@ class DataPrep():
     Data preprocessing object
     '''
 
-    def __init__(self):
+    def __init__(self, cat_feats=None, quant_feats=None, scorings=None):
+        '''
+        Initialize an object for data preprocessing to
+        + onehot encode specified categorical features
+        + convert quantitative features disguised as text to scores
+
+        :param cat_feats: specified categorical features
+        :param quant_feats: specified quantitative features
+        :param scorings: list of scoring for each quantitative feature
+        '''
+        self.cat_feats = cat_feats
+        self.quant_feats = quant_feats
+        self.scorings = scorings
         pass
 
-    def add_derived_feats(self, data_all):
+    def add_derived_feats(self, data):
         print('Add derived features...')
-        data_all['age_in_year'] = data_all['YrSold'] - data_all['YearBuilt']
-        data_all['years_from_remodel'] = data_all['YrSold'] - data_all['YearRemodAdd']
-        return data_all
+        data['age_in_year'] = data['YrSold'] - data['YearBuilt']
+        data['years_from_remodel'] = data['YrSold'] - data['YearRemodAdd']
+        return data
 
-    def choose_features(self, X, cat_feats=None, quant_feats=None):
+    def encode_cat_feats(self, data):
+        print('\n Onehot encoding categorical feats {}...'.format(self.cat_feats))
+        for cf in self.cat_feats:
+            data = onehot_encode(cf, data)
+
+        return data
+
+    def quant_to_scores(self, data):
+        print('\n Converting quantitative text features to scores...')
+        score_dict = dict(zip(self.quant_feats, self.scorings))
+        for tf in score_dict.keys():
+            data = to_quantitative(text_feat=tf, df=data, scoring=score_dict[tf])
+
+        return data
+
+    def choose_features(self, data):
         '''
         Choose features to be used as predictors from:
         + numerical feats
         + categorical feats
-        :param quant_feats:
-        :param cat_feats:
-        :param X:
+        :param data:
         :return:
         '''
         numerical_feats = ['LotArea', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd',
@@ -36,16 +63,31 @@ class DataPrep():
                       '2ndFlrSF', ]
         features = numerical_feats + area_feats
 
-        if cat_feats:
-            for cf in cat_feats:
-                features += get_onehot_features(cf, X)
+        if self.cat_feats:
+            print('Adding onehot encoding of categorical features:')
+            print(self.cat_feats)
+            for cf in self.cat_feats:
+                features += get_onehot_features(cf, data)
 
-        if quant_feats:
-            print('Adding quantitative features')
-            features += to_score_feats(quant_feats)
+        if self.quant_feats:
+            print('Adding score features:')
+            score_feats = to_score_feats(self.quant_feats)
+            print(score_feats)
+            features += score_feats
 
-        print('features used for training models: {}'.format(features))
-        return features
+        print('Features used for training models: {}'.format(features))
+        self.features = features
+
+    def fillna_all(self, data, value):
+        # fill NA in both train and test
+        print('Fill NAs in features by {}'.format(value))
+        data[self.features].fillna(0, inplace=True)
+        return data
+
+    def dump(self):
+        # for persistence of features
+        fname = os.path.join(DAT_DIR, 'data_prep.pkl')
+        joblib.dump(self, fname)
 
 
 def get_onehot_features(cat_feat, df):
@@ -123,37 +165,36 @@ if __name__ == '__main__':
     response = 'SalePrice'
     data_all = join(train, test, response)
 
-    print('\n Onehot encoding categorical feats...')
-    data_all = onehot_encode('Neighborhood', data_all)
-    # zone_full = load_full_form('zones.csv')
-    # data_all = to_full('MSZoning', data_all, zone_full)
-    data_all = onehot_encode('MSZoning', data_all)
+    quant_feats = ['Utilities',
+                   'ExterQual',
+                   'ExterCond',
+                   'HeatingQC',
+                   'BsmtQual',
+                   'BsmtCond',
+                   'BsmtExposure',
+                   'BsmtFinType1',
+                   ]
+    scorings = [{"AllPub": 4, "NoSewr": 3, "NoSeWa": 2, "ELO": 1, "NA": 0},
+                {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
+                {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
+                {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
+                {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
+                {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
+                {"Gd": 4, "Av": 3, "Mn": 2, "No": 1, "NA": 0},
+                {"GLQ": 6, "ALQ": 5, "BLQ": 4, "Rec": 3, "LwQ": 2, "Unf": 1, "NA": 0},
+                ]
+    dp = DataPrep(cat_feats=['Neighborhood', 'MSZoning'],
+                  quant_feats=quant_feats,
+                  scorings=scorings)
 
-    print('\n Encoding quantitative text features...')
-    score_dict = {
-        "Utilities": {"AllPub": 4, "NoSewr": 3, "NoSeWa": 2, "ELO": 1, "NA": 0},
-        "ExterQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
-        "ExterCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
-        "HeatingQC": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
-        "BsmtQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
-        "BsmtCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
-        "BsmtExposure": {"Gd": 4, "Av": 3, "Mn": 2, "No": 1, "NA": 0},
-        "BsmtFinType1": {"GLQ": 6, "ALQ": 5, "BLQ": 4, "Rec": 3, "LwQ": 2, "Unf": 1, "NA": 0},
-    }
+    data_all = dp.encode_cat_feats(data_all)
+    data_all = dp.quant_to_scores(scorings)
 
-    for tf in score_dict.keys():
-        data_all = to_quantitative(text_feat=tf, df=data_all, scoring=score_dict[tf])
-
-    dp = DataPrep()
-    features = dp.choose_features(data_all,
-                                  cat_feats=['Neighborhood', 'full_MSZoning'],
-                                  quant_feats=['Utilities', 'ExterQual', 'ExterCond', 'HeatingQC'])
-
-    # fill NA in both train and test
-    print('Fill NAs in features by 0')
-    data_all[features].fillna(0, inplace=True)
-
+    dp.choose_features(data_all)
+    data_all = dp.fillna_all(data_all, value=0)
+    dp.dump()
     ## End of preprocesses ==================
+
     print('Shape of data_all after all preprocessing: {}'.format(data_all.shape))
     score_feats = [cc for cc in data_all.columns if '_score' in cc]
     print('Sample of features with score:')
