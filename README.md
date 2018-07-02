@@ -11,3 +11,4 @@ This repo contains source code of creating models for predicting house price in 
 + `DataPrep`: for all data preprocessing such as filling NAs, onehot encoding categorical features, encoding quantitative features which are disguised as text
 + `Trainer`: for training and model selection via cross-validating
 + `Predictor`: for making predictions
++ `PostAnalyzer`: for post-train analysis
