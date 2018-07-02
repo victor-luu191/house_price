@@ -62,7 +62,7 @@ class DataPrep():
                       '1stFlrSF',
                       '2ndFlrSF',
                       'WoodDeckSF',
-                      # 'OpenPorchSF',
+                      'GrLivArea',
                       ]
         features = numerical_feats + area_feats
         print('Starting set of features:')
