@@ -17,11 +17,14 @@ def to_file_name(s):
     return s.replace(' ', '_').lower()
 
 
+def to_score_feats(quant_feats):
+    return [qf + '_score' for qf in quant_feats]
+
 class Trainer():
-    def __init__(self, train_df, validation_ratio, cat_feats=None, stratify=None):
+    def __init__(self, train_df, validation_ratio, cat_feats=None, quant_feats=None, stratify=None):
 
         # limit to only interested features
-        cols = self.choose_features(train_df, cat_feats) + ['SalePrice']
+        cols = self.choose_features(train_df, cat_feats, quant_feats) + ['SalePrice']
         compact_train = train_df[cols]
 
         # drop NAs
@@ -45,11 +48,12 @@ class Trainer():
         self.models = {**lin_models, **tree_models}  # join two dicts
         self.predictions = dict()
 
-    def choose_features(self, X, cat_feats=None):
+    def choose_features(self, X, cat_feats=None, quant_feats=None):
         '''
         Choose features to be used as predictors from:
         + numerical feats
         + categorical feats
+        :param quant_feats:
         :param cat_feats:
         :param X:
         :return:
@@ -60,12 +64,16 @@ class Trainer():
 
         if cat_feats:
             for cf in cat_feats:
-                self.add_derived_feats(cf, X)
+                self.add_derived_features(cf, X)
+
+        if quant_feats:
+            print('Adding quantitative features')
+            self.features += to_score_feats(quant_feats)
 
         print('features used for training models: {}'.format(self.features))
         return self.features
 
-    def add_derived_feats(self, cat_feat, df):
+    def add_derived_features(self, cat_feat, df):
         '''
         Include the given categorical feature
         :param df:
@@ -167,12 +175,13 @@ if __name__ == '__main__':
     data_all = pd.read_csv(input_file)
     print('loaded all data')
 
-
     train = data_all[data_all['SalePrice'].notnull()]
     print('# rows in train data: {}'.format(train.shape[0]))
 
     trainer = Trainer(train_df=train, validation_ratio=0.1,
-                      cat_feats=['Neighborhood', 'MSZoning'])
+                      cat_feats=['Neighborhood', 'full_MSZoning'],
+                      quant_feats=['Utilities', 'ExterQual', 'ExterCond', 'HeatingQC']
+                      )
 
     metrics_file = os.path.join(RES_DIR, 'metrics.csv')  # 'metrics_{}.csv'.format(cat_feat)
     pred_file = os.path.join(RES_DIR, 'validation.csv')  # 'validation_{}.csv'.format(cat_feat)

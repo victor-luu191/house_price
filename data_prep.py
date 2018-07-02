@@ -42,21 +42,21 @@ def to_quantitative(text_feat, df, scoring):
     :return:
     '''
     print('\t {}'.format(text_feat))
-    n_na = sum(df[text_feat].isnull())
-    print('\t Column {} has {} NAs, they will be filled by forward filling'.format(text_feat, n_na))
 
     res = df.copy()
-    res[text_feat].fillna(method='ffill', inplace=True)
-    res['{}_score'.format(text_feat)] = res[text_feat].apply(lambda form: scoring[form])
+    n_na = sum(df[text_feat].isnull())
+    print('\t Column {0} has {1} NAs, they will be filled by 0'.format(text_feat, n_na))
+    res[text_feat].fillna("NA", inplace=True)
+
+    # print('\t Column {} has {} NAs, they will be filled by forward filling'.format(text_feat, n_na))
+    # res[text_feat].fillna(method='ffill', inplace=True)
+    res['{}'.format(text_feat) + '_score'] = res[text_feat].apply(lambda form: scoring[form])
     return res
 
 
 if __name__ == '__main__':
     train = pd.read_csv(os.path.join(DAT_DIR, 'train.csv'))
     test = pd.read_csv(os.path.join(DAT_DIR, 'test.csv'))
-    # this is applicable only to well-indexed data sets
-    print('last row in train set: {}'.format(max(train.Id)))
-    print('first row in test set: {}'.format(min(test.Id)))
 
     ## Preprocesses
     response = 'SalePrice'
@@ -74,15 +74,16 @@ if __name__ == '__main__':
 
     print('\n Encoding quantitative text features...')
     score_dict = {
-        "Utilities": {"AllPub": 4, "NoSewr": 3, "NoSeWa": 2, "ELO": 1},
-        "ExterQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1},
-        "ExterCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1},
-        "HeatingQC": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1}
+        "Utilities": {"AllPub": 4, "NoSewr": 3, "NoSeWa": 2, "ELO": 1, "NA": 0},
+        "ExterQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
+        "ExterCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
+        "HeatingQC": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
+        "BsmtQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
+        "BsmtCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
+        "BsmtExposure": {"Gd": 4, "Av": 3, "Mn": 2, "No": 1, "NA": 0},
+        "BsmtFinType1": {"GLQ": 6, "ALQ": 5, "BLQ": 4, "Rec": 3, "LwQ": 2, "Unf": 1, "NA": 0},
     }
-    # "BsmtQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
-    # "BsmtCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
-    # "BsmtExposure": {"Gd": 5, "Av": 4, "Mn": 3, "No": 2, "NA": 1},
-    # "BsmtFinType1": {"GLQ": 6, "ALQ": 5, "BLQ": 4, "Rec": 3, "LwQ": 2, "Unf": 1, "NA": 0},
+
     for tf in score_dict.keys():
         data_all = to_quantitative(text_feat=tf, df=data_all, scoring=score_dict[tf])
 
