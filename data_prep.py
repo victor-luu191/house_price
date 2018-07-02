@@ -64,7 +64,9 @@ class DataPrep():
                       'WoodDeckSF',
                       'GrLivArea',
                       ]
-        features = numerical_feats + area_feats
+        room_feats = ['TotRmsAbvGrd',
+                      ]
+        features = numerical_feats + area_feats + room_feats
         print('Starting set of features:')
         print(features)
 
