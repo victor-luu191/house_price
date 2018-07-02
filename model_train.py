@@ -15,19 +15,16 @@ SEED = 1
 
 
 class Trainer():
-    def __init__(self, data, validation_ratio,
-                 data_prep: DataPrep,
+    def __init__(self, train, validation_ratio,
+                 preprocess: DataPrep,
                  stratify=None):
-        # limit to only interested features
 
-        features = data_prep.choose_features(data)
+        # limit to only interested features
+        features = preprocess.features
         self.features = features
         cols = features + ['SalePrice']
 
-        train = data[data['SalePrice'].notnull()]
-        print('# rows in train data: {}'.format(train.shape[0]))
         compact_train = train[cols]
-
         X = compact_train.drop('SalePrice', axis='columns')
         y = compact_train['SalePrice']
 
@@ -130,6 +127,10 @@ def to_file_name(s):
     return s.replace(' ', '_').lower()
 
 
+def load_data_prep(fname):
+    return joblib.load(os.path.join(DAT_DIR, fname))
+
+
 if __name__ == '__main__':
     # args = parse_args()
     # input_file = os.path.join(DAT_DIR, vars(args)['input_file'])
@@ -138,11 +139,15 @@ if __name__ == '__main__':
 
     input_file = os.path.join(DAT_DIR, 'data_all.csv')
     data_all = pd.read_csv(input_file)
-    print('loaded all data')
+    print('Loaded all data')
 
-    trainer = Trainer(data=data_all,
+    dp = load_data_prep(fname='data_prep.pkl')
+    train = data_all[data_all['SalePrice'].notnull()]
+    print('# rows in train data: {}'.format(train.shape[0]))
+
+    trainer = Trainer(train,
                       validation_ratio=0.1,
-                      data_prep=data_prep)
+                      preprocess=dp)
 
     metrics_file = os.path.join(RES_DIR, 'metrics.csv')  # 'metrics_{}.csv'.format(cat_feat)
     pred_file = os.path.join(RES_DIR, 'validation.csv')  # 'validation_{}.csv'.format(cat_feat)
