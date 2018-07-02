@@ -18,7 +18,6 @@ class Predictor():
 
 def load_predictor(fname):
     predictor = joblib.load(fname)
-    print('the predictor was trained using features {}'.format(predictor.features))
     return predictor
 
 
