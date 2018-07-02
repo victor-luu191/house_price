@@ -58,9 +58,13 @@ class Trainer():
         :param X:
         :return:
         '''
-        self.numerical_feats = ['LotArea', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd', 'age_in_year',
-                                'years_from_remodel']
-        self.features = self.numerical_feats
+        self.numerical_feats = ['LotArea', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd',
+                                'age_in_year', 'years_from_remodel',
+                                ]
+        area_feats = ['TotalBsmtSF',
+                      '1stFlrSF',
+                      '2ndFlrSF', ]
+        self.features = self.numerical_feats + area_feats
 
         if cat_feats:
             for cf in cat_feats:
