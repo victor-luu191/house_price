@@ -35,8 +35,17 @@ class DataPrep():
     def encode_cat_feats(self, data):
         cat_feats = self.cat_feats
         print('Onehot encode categorical features {}'.format(cat_feats))
-        encoded = pd.get_dummies(data, columns=cat_feats, prefix=cat_feats, dummy_na=True)
-        res = pd.concat([data.drop(columns=cat_feats), encoded], axis='columns')
+
+        encoded_df = data.copy()
+        # encode 1 cat feature at a time
+        for cf in self.cat_feats:
+            encoded_df = self.onehot_encode(cf, encoded_df)
+
+        return encoded_df
+
+    def onehot_encode(self, cat_feat, data):
+        encoded = pd.get_dummies(data[cat_feat], prefix=cat_feat, dummy_na=True)
+        res = pd.concat([data.drop(columns=[cat_feat]), encoded], axis='columns')
         return res
 
     def quant_to_scores(self, data):
