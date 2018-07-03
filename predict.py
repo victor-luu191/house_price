@@ -30,7 +30,7 @@ def load_test_data():
 
 
 if __name__ == '__main__':
-    fname = os.path.join(MODEL_DIR, 'boosted_regression_tree.pkl') # random_forest, xgboost
+    fname = os.path.join(MODEL_DIR, 'xgboost.pkl') # random_forest, , boosted_regression_tree
     predictor = load_predictor(fname)
 
     X_test = load_test_data()

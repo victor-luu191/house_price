@@ -171,8 +171,8 @@ if __name__ == '__main__':
 
     cat_feats = ['MSZoning',
                  'Neighborhood',
-                 'SaleType',
-                 # 'SaleCondition',
+                 # 'SaleType',
+                 'SaleCondition',
                  ]
 
     quant_feats = ['Utilities',
