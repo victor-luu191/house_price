@@ -64,36 +64,46 @@ class DataPrep():
         :param data:
         :return:
         '''
+        onehot_feats = self.query_onehot_features(data)
+        numerical_feats = self.query_numeric_features()
+
+        features = onehot_feats + numerical_feats
+        print('Features used for training models: {}'.format(features))
+
+        self.features = features
+        self.numerical_feats = numerical_feats
+        self.onehot_features = onehot_feats
+
+    def query_numeric_features(self):
         numerical_feats = ['LotArea', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd',
                            'age_in_year', 'years_from_remodel',
                            ]
         area_feats = ['TotalBsmtSF',
                       '1stFlrSF',
                       '2ndFlrSF', ]
-        features = numerical_feats + area_feats
-        print('Starting set of features:')
-        print(features)
-
-        if self.cat_feats:
-            print('Adding onehot encoding of categorical features:')
-            print(self.cat_feats)
-            for cf in self.cat_feats:
-                features += get_onehot_features(cf, data)
-
+        numerical_feats += area_feats
+        # include score features to numerical features
         if self.quant_feats:
             print('Adding score features:')
             score_feats = to_score_feats(self.quant_feats)
             print(score_feats)
-            features += score_feats
+            numerical_feats += score_feats
+        return numerical_feats
 
-        print('Features used for training models: {}'.format(features))
-        self.features = features
+    def query_onehot_features(self, data):
+        onehot_features = []
+        if self.cat_feats:
+            print('Adding onehot-encoded names of categorical features:')
+            print(self.cat_feats)
+            for cf in self.cat_feats:
+                onehot_features += get_onehot_features(cf, data)
+        return onehot_features
 
     def fillna_all(self, data, value):
         # fill NA in numerical feats in both train and test sets
         print('Fill NAs in features by {}'.format(value))
         copy = data.copy()
-        copy[self.features] = data[self.features].fillna(value)
+        copy[self.numerical_feats] = data[self.numerical_feats].fillna(value)
 
         # self.check_na(copy)
         return copy
@@ -193,7 +203,7 @@ if __name__ == '__main__':
     data_all = dp.encode_cat_feats(data_all)
     data_all = dp.quant_to_scores(data_all)
     dp.choose_features(data_all)
-    # data_all = dp.fillna_all(data_all, value=0)
+    data_all = dp.fillna_all(data_all, value=0)
     dp.dump()
     ## End of preprocesses ==================
 
