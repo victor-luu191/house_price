@@ -33,10 +33,11 @@ class DataPrep():
         return data
 
     def encode_cat_feats(self, data):
-        print('\n Onehot encoding categorical feats {}...'.format(self.cat_feats))
-        data = onehot_encode(self.cat_feats, data)
-
-        return data
+        cat_feats = self.cat_feats
+        print('Onehot encode categorical features {}'.format(cat_feats))
+        encoded = pd.get_dummies(data, columns=cat_feats, prefix=cat_feats, dummy_na=True)
+        res = pd.concat([data.drop(cat_feats, axis=1), encoded], axis='columns')
+        return res
 
     def quant_to_scores(self, data):
         print('\n Converting quantitative text features to scores...')
@@ -121,13 +122,6 @@ def join(train, test, response):
     return pd.concat([train, test])
 
 
-def onehot_encode(cat_feats, df):
-    print('Onehot encode categorical features {}'.format(cat_feats))
-    encoded = pd.get_dummies(df, columns=cat_feats, prefix=cat_feats, dummy_na=True)
-    res = pd.concat([df.drop(cat_feats, axis=1), encoded], axis='columns')
-    return res
-
-
 def to_quantitative(text_feat, df, scoring):
     '''
     Given a feature stored in data as text but actually a quantitative feat, convert it to numerical values
@@ -157,9 +151,9 @@ if __name__ == '__main__':
     response = 'SalePrice'
     data_all = join(train, test, response)
 
-    cat_feats = ['Neighborhood',
-                 'MSZoning',
-                 'SaleType',
+    cat_feats = ['MSZoning',
+                 # 'Neighborhood',
+                 # 'SaleType',
                  # 'SaleCondition',
                  ]
 
@@ -189,14 +183,15 @@ if __name__ == '__main__':
 
     data_all = dp.add_derived_feats(data_all)
     data_all = dp.encode_cat_feats(data_all)
-    data_all = dp.quant_to_scores(data_all)
-
-    dp.choose_features(data_all)
+    # data_all = dp.quant_to_scores(data_all)
+    # dp.choose_features(data_all)
     # data_all = dp.fillna_all(data_all, value=0)
-    dp.dump()
+    # dp.dump()
     ## End of preprocesses ==================
 
     print('Shape of data_all after all preprocessing: {}'.format(data_all.shape))
+    # debug
+    print(data_all[cols].head())
 
     fname = os.path.join(DAT_DIR, 'data_all.csv')
     data_all.to_csv(fname, index=False)
