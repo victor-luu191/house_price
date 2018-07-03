@@ -160,8 +160,8 @@ if __name__ == '__main__':
     data_all = join(train, test, response)
 
     cat_feats = ['MSZoning',
-                 # 'Neighborhood',
-                 # 'SaleType',
+                 'Neighborhood',
+                 'SaleType',
                  # 'SaleCondition',
                  ]
 
@@ -192,9 +192,9 @@ if __name__ == '__main__':
     data_all = dp.add_derived_feats(data_all)
     data_all = dp.encode_cat_feats(data_all)
     data_all = dp.quant_to_scores(data_all)
-    # dp.choose_features(data_all)
+    dp.choose_features(data_all)
     # data_all = dp.fillna_all(data_all, value=0)
-    # dp.dump()
+    dp.dump()
     ## End of preprocesses ==================
 
     print('Shape of data_all after all preprocessing: {}'.format(data_all.shape))
