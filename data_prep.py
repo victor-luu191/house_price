@@ -36,13 +36,13 @@ class DataPrep():
         cat_feats = self.cat_feats
         print('Onehot encode categorical features {}'.format(cat_feats))
         encoded = pd.get_dummies(data, columns=cat_feats, prefix=cat_feats, dummy_na=True)
-        res = pd.concat([data.drop(cat_feats, axis=1), encoded], axis='columns')
+        res = pd.concat([data.drop(columns=cat_feats), encoded], axis='columns')
         return res
 
     def quant_to_scores(self, data):
         print('\n Converting quantitative text features to scores...')
         score_dict = dict(zip(self.quant_feats, self.scorings))
-        for tf in score_dict.keys():
+        for tf in self.quant_feats: # score_dict.keys()
             data = to_quantitative(text_feat=tf, df=data, scoring=score_dict[tf])
 
         return data
@@ -130,11 +130,10 @@ def to_quantitative(text_feat, df, scoring):
     :param text_feat:
     :return:
     '''
-    print('\t {}'.format(text_feat))
+    n_na = sum(df[text_feat].isnull())
+    print('\t Feature {0} has {1} NAs, they will be filled by 0'.format(text_feat, n_na))
 
     res = df.copy()
-    n_na = sum(df[text_feat].isnull())
-    print('\t Column {0} has {1} NAs, they will be filled by 0'.format(text_feat, n_na))
     res[text_feat].fillna("NA", inplace=True)
 
     # print('\t Column {} has {} NAs, they will be filled by forward filling'.format(text_feat, n_na))
@@ -183,15 +182,14 @@ if __name__ == '__main__':
 
     data_all = dp.add_derived_feats(data_all)
     data_all = dp.encode_cat_feats(data_all)
-    # data_all = dp.quant_to_scores(data_all)
+    data_all = dp.quant_to_scores(data_all)
     # dp.choose_features(data_all)
     # data_all = dp.fillna_all(data_all, value=0)
     # dp.dump()
     ## End of preprocesses ==================
 
     print('Shape of data_all after all preprocessing: {}'.format(data_all.shape))
-    # debug
-    print(data_all[cols].head())
+
 
     fname = os.path.join(DAT_DIR, 'data_all.csv')
     data_all.to_csv(fname, index=False)
