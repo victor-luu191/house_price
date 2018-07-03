@@ -1,6 +1,4 @@
 import pandas as pd
-import numpy as np
-import os
 
 from predict import load_predictor
 from setting import MODEL_DIR

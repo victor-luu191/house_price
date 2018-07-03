@@ -1,9 +1,6 @@
-import pandas as pd
-import numpy as np
 from sklearn.externals import joblib
 
 from setting import *
-import os
 
 
 class Predictor():
