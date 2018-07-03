@@ -128,23 +128,6 @@ def onehot_encode(cat_feats, df):
     return res
 
 
-def to_full(abbv_feat, df, full_form):
-    # convert an abbreviated feature in data into its full form via given full forms
-    full_feat = 'full_' + abbv_feat
-    df[abbv_feat] = df[abbv_feat].fillna("NA")
-    df[full_feat] = df[abbv_feat].apply(lambda x: full_form[x])
-    return df
-
-
-def load_full_form(fname):
-    tmp = pd.read_csv(os.path.join(DAT_DIR, fname), keep_default_na=False)
-    full_form = dict(zip(tmp['abbr'], tmp['full']))
-
-    # debug
-    # print('full forms: {}'.format(full_form))
-    return full_form
-
-
 def to_quantitative(text_feat, df, scoring):
     '''
     Given a feature stored in data as text but actually a quantitative feat, convert it to numerical values
