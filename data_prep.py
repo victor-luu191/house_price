@@ -34,8 +34,7 @@ class DataPrep():
 
     def encode_cat_feats(self, data):
         print('\n Onehot encoding categorical feats {}...'.format(self.cat_feats))
-        for cf in self.cat_feats:
-            data = onehot_encode(cf, data)
+        data = onehot_encode(self.cat_feats, data)
 
         return data
 
@@ -81,7 +80,7 @@ class DataPrep():
         self.features = features
 
     def fillna_all(self, data, value):
-        # fill NA in both train and test
+        # fill NA in numerical feats in both train and test sets
         print('Fill NAs in features by {}'.format(value))
         copy = data.copy()
         copy[self.features] = data[self.features].fillna(value)
@@ -122,10 +121,10 @@ def join(train, test, response):
     return pd.concat([train, test])
 
 
-def onehot_encode(feat, df):
-    print('Onehot encode feature {}'.format(feat))
-    encoded = pd.get_dummies(df[feat], prefix=feat)
-    res = pd.concat([df.drop(feat, axis=1), encoded], axis='columns')
+def onehot_encode(cat_feats, df):
+    print('Onehot encode categorical features {}'.format(cat_feats))
+    encoded = pd.get_dummies(df, columns=cat_feats, prefix=cat_feats, dummy_na=True)
+    res = pd.concat([df.drop(cat_feats, axis=1), encoded], axis='columns')
     return res
 
 
@@ -175,6 +174,12 @@ if __name__ == '__main__':
     response = 'SalePrice'
     data_all = join(train, test, response)
 
+    cat_feats = ['Neighborhood',
+                 'MSZoning',
+                 'SaleType',
+                 # 'SaleCondition',
+                 ]
+
     quant_feats = ['Utilities',
                    'ExterQual',
                    'ExterCond',
@@ -194,7 +199,8 @@ if __name__ == '__main__':
                 {"Gd": 4, "Av": 3, "Mn": 2, "No": 1, "NA": 0},
                 {"GLQ": 6, "ALQ": 5, "BLQ": 4, "Rec": 3, "LwQ": 2, "Unf": 1, "NA": 0},
                 ]
-    dp = DataPrep(cat_feats=['Neighborhood', 'MSZoning'],
+
+    dp = DataPrep(cat_feats=cat_feats,
                   quant_feats=quant_feats,
                   scorings=scorings)
 
@@ -203,14 +209,11 @@ if __name__ == '__main__':
     data_all = dp.quant_to_scores(data_all)
 
     dp.choose_features(data_all)
-    data_all = dp.fillna_all(data_all, value=0)
+    # data_all = dp.fillna_all(data_all, value=0)
     dp.dump()
     ## End of preprocesses ==================
 
     print('Shape of data_all after all preprocessing: {}'.format(data_all.shape))
-    score_feats = [cc for cc in data_all.columns if '_score' in cc]
-    print('Sample of features with score:')
-    print(data_all[score_feats].head())
 
     fname = os.path.join(DAT_DIR, 'data_all.csv')
     data_all.to_csv(fname, index=False)
