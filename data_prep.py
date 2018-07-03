@@ -99,7 +99,7 @@ class DataPrep():
                 onehot_features += get_onehot_features(cf, data)
         return onehot_features
 
-    def fillna_all(self, data, value):
+    def fillna_numeric_feats(self, data, value):
         # fill NA in numerical feats in both train and test sets
         print('Fill NAs in features by {}'.format(value))
         copy = data.copy()
@@ -203,7 +203,7 @@ if __name__ == '__main__':
     data_all = dp.encode_cat_feats(data_all)
     data_all = dp.quant_to_scores(data_all)
     dp.choose_features(data_all)
-    data_all = dp.fillna_all(data_all, value=0)
+    data_all = dp.fillna_numeric_feats(data_all, value=0)
     dp.dump()
     ## End of preprocesses ==================
 
