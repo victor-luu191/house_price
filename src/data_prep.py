@@ -3,7 +3,7 @@ import os
 import numpy as np
 from sklearn.externals import joblib
 
-from setting import DAT_DIR
+from src.setting import DAT_DIR
 
 
 class DataPrep():
@@ -86,16 +86,8 @@ class DataPrep():
                       ]
         room_feats = ['TotRmsAbvGrd',
                       ]
-        features = numerical_feats + area_feats + room_feats
-        print('Starting set of features:')
-        print(features)
-
-        if self.cat_feats:
-            print('Adding onehot encoding of categorical features:')
-            print(self.cat_feats)
-            for cf in self.cat_feats:
-                features += get_onehot_features(cf, data)
-
+        numerical_feats += (area_feats + room_feats)
+        # include score features to numerical features
         if self.quant_feats:
             print('Adding score features:')
             score_feats = to_score_feats(self.quant_feats)

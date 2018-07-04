@@ -1,6 +1,7 @@
 from sklearn.externals import joblib
 
-from setting import *
+from src.setting import *
+import os
 
 
 class Predictor():
