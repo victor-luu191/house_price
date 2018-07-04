@@ -186,6 +186,8 @@ if __name__ == '__main__':
                    'HeatingQC',
                    'BsmtQual',
                    'BsmtCond',
+                   'KitchenQual',
+                   # 'FireplaceQu',
                    'BsmtExposure',
                    'BsmtFinType1',
                    ]
@@ -196,6 +198,8 @@ if __name__ == '__main__':
                 six_scale,
                 six_scale,
                 six_scale,
+                six_scale,
+                # six_scale,
                 {"Gd": 4, "Av": 3, "Mn": 2, "No": 1, "NA": 0},
                 {"GLQ": 6, "ALQ": 5, "BLQ": 4, "Rec": 3, "LwQ": 2, "Unf": 1, "NA": 0},
                 ]
