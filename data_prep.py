@@ -33,16 +33,25 @@ class DataPrep():
         return data
 
     def encode_cat_feats(self, data):
-        print('\n Onehot encoding categorical feats {}...'.format(self.cat_feats))
-        for cf in self.cat_feats:
-            data = onehot_encode(cf, data)
+        cat_feats = self.cat_feats
+        print('Onehot encode categorical features {}'.format(cat_feats))
 
-        return data
+        encoded_df = data.copy()
+        # encode 1 cat feature at a time
+        for cf in self.cat_feats:
+            encoded_df = self.onehot_encode(cf, encoded_df)
+
+        return encoded_df
+
+    def onehot_encode(self, cat_feat, data):
+        encoded = pd.get_dummies(data[cat_feat], prefix=cat_feat, dummy_na=True)
+        res = pd.concat([data.drop(columns=[cat_feat]), encoded], axis='columns')
+        return res
 
     def quant_to_scores(self, data):
         print('\n Converting quantitative text features to scores...')
         score_dict = dict(zip(self.quant_feats, self.scorings))
-        for tf in score_dict.keys():
+        for tf in self.quant_feats: # score_dict.keys()
             data = to_quantitative(text_feat=tf, df=data, scoring=score_dict[tf])
 
         return data
@@ -55,6 +64,17 @@ class DataPrep():
         :param data:
         :return:
         '''
+        onehot_feats = self.query_onehot_features(data)
+        numerical_feats = self.query_numeric_features()
+
+        features = onehot_feats + numerical_feats
+        print('Features used for training models: {}'.format(features))
+
+        self.features = features
+        self.numerical_feats = numerical_feats
+        self.onehot_features = onehot_feats
+
+    def query_numeric_features(self):
         numerical_feats = ['LotArea', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd',
                            'age_in_year', 'years_from_remodel',
                            ]
@@ -80,16 +100,23 @@ class DataPrep():
             print('Adding score features:')
             score_feats = to_score_feats(self.quant_feats)
             print(score_feats)
-            features += score_feats
+            numerical_feats += score_feats
+        return numerical_feats
 
-        print('Features used for training models: {}'.format(features))
-        self.features = features
+    def query_onehot_features(self, data):
+        onehot_features = []
+        if self.cat_feats:
+            print('Adding onehot-encoded names of categorical features:')
+            print(self.cat_feats)
+            for cf in self.cat_feats:
+                onehot_features += get_onehot_features(cf, data)
+        return onehot_features
 
-    def fillna_all(self, data, value):
-        # fill NA in both train and test
+    def fillna_numeric_feats(self, data, value):
+        # fill NA in numerical feats in both train and test sets
         print('Fill NAs in features by {}'.format(value))
         copy = data.copy()
-        copy[self.features] = data[self.features].fillna(value)
+        copy[self.numerical_feats] = data[self.numerical_feats].fillna(value)
 
         # self.check_na(copy)
         return copy
@@ -127,30 +154,6 @@ def join(train, test, response):
     return pd.concat([train, test])
 
 
-def onehot_encode(feat, df):
-    print('Onehot encode feature {}'.format(feat))
-    encoded = pd.get_dummies(df[feat], prefix=feat)
-    res = pd.concat([df.drop(feat, axis=1), encoded], axis='columns')
-    return res
-
-
-def to_full(abbv_feat, df, full_form):
-    # convert an abbreviated feature in data into its full form via given full forms
-    full_feat = 'full_' + abbv_feat
-    df[abbv_feat] = df[abbv_feat].fillna("NA")
-    df[full_feat] = df[abbv_feat].apply(lambda x: full_form[x])
-    return df
-
-
-def load_full_form(fname):
-    tmp = pd.read_csv(os.path.join(DAT_DIR, fname), keep_default_na=False)
-    full_form = dict(zip(tmp['abbr'], tmp['full']))
-
-    # debug
-    # print('full forms: {}'.format(full_form))
-    return full_form
-
-
 def to_quantitative(text_feat, df, scoring):
     '''
     Given a feature stored in data as text but actually a quantitative feat, convert it to numerical values
@@ -159,11 +162,10 @@ def to_quantitative(text_feat, df, scoring):
     :param text_feat:
     :return:
     '''
-    print('\t {}'.format(text_feat))
+    n_na = sum(df[text_feat].isnull())
+    print('\t Feature {0} has {1} NAs, they will be filled by 0'.format(text_feat, n_na))
 
     res = df.copy()
-    n_na = sum(df[text_feat].isnull())
-    print('\t Column {0} has {1} NAs, they will be filled by 0'.format(text_feat, n_na))
     res[text_feat].fillna("NA", inplace=True)
 
     # print('\t Column {} has {} NAs, they will be filled by forward filling'.format(text_feat, n_na))
@@ -180,6 +182,12 @@ if __name__ == '__main__':
     response = 'SalePrice'
     data_all = join(train, test, response)
 
+    cat_feats = ['MSZoning',
+                 'Neighborhood',
+                 # 'SaleType',
+                 'SaleCondition',
+                 ]
+
     quant_feats = ['Utilities',
                    'ExterQual',
                    'ExterCond',
@@ -189,32 +197,31 @@ if __name__ == '__main__':
                    'BsmtExposure',
                    'BsmtFinType1',
                    ]
+    six_scale = {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0}
     scorings = [{"AllPub": 4, "NoSewr": 3, "NoSeWa": 2, "ELO": 1, "NA": 0},
-                {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
-                {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
-                {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
-                {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
-                {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0},
+                six_scale,
+                six_scale,
+                six_scale,
+                six_scale,
+                six_scale,
                 {"Gd": 4, "Av": 3, "Mn": 2, "No": 1, "NA": 0},
                 {"GLQ": 6, "ALQ": 5, "BLQ": 4, "Rec": 3, "LwQ": 2, "Unf": 1, "NA": 0},
                 ]
-    dp = DataPrep(cat_feats=['Neighborhood', 'MSZoning'],
+
+    dp = DataPrep(cat_feats=cat_feats,
                   quant_feats=quant_feats,
                   scorings=scorings)
 
     data_all = dp.add_derived_feats(data_all)
     data_all = dp.encode_cat_feats(data_all)
     data_all = dp.quant_to_scores(data_all)
-
     dp.choose_features(data_all)
-    data_all = dp.fillna_all(data_all, value=0)
+    data_all = dp.fillna_numeric_feats(data_all, value=0)
     dp.dump()
     ## End of preprocesses ==================
 
     print('Shape of data_all after all preprocessing: {}'.format(data_all.shape))
-    score_feats = [cc for cc in data_all.columns if '_score' in cc]
-    print('Sample of features with score:')
-    print(data_all[score_feats].head())
+
 
     fname = os.path.join(DAT_DIR, 'data_all.csv')
     data_all.to_csv(fname, index=False)

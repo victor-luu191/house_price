@@ -27,7 +27,7 @@ def load_test_data():
 
 
 if __name__ == '__main__':
-    fname = os.path.join(MODEL_DIR, 'boosted_regression_tree.pkl') # random_forest, xgboost,
+    fname = os.path.join(MODEL_DIR, 'xgboost.pkl') # random_forest, , boosted_regression_tree
     predictor = load_predictor(fname)
 
     X_test = load_test_data()
@@ -39,5 +39,6 @@ if __name__ == '__main__':
 
     print('make submission file')
     cols = ['Id', 'SalePrice']
-    submit = X_test[cols].drop_duplicates() # todo check why duplicates occur
+    submit = X_test[cols]
+    print('# rows in submit: {}'.format(submit.shape[0]))
     submit.to_csv(os.path.join(RES_DIR, 'submit.csv'), index=False)
