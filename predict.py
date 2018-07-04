@@ -42,5 +42,6 @@ if __name__ == '__main__':
 
     print('make submission file')
     cols = ['Id', 'SalePrice']
-    submit = X_test[cols].drop_duplicates() # todo check why duplicates occur
+    submit = X_test[cols]
+    print('# rows in submit: {}'.format(submit.shape[0]))
     submit.to_csv(os.path.join(RES_DIR, 'submit.csv'), index=False)
