@@ -9,9 +9,14 @@ class Predictor():
         self.model = model
         self.features = features
 
-    def predict(self, X):
+    def predict_(self, test):
         feats = self.features
-        return self.model.predict(X[feats])
+        return self.model.predict(test[feats])
+
+    def refit(self, train):
+        X_train, y_train = train[self.features], train['SalePrice']
+        self.model.fit(X_train, y_train)
+        return self
 
 
 def load_predictor(fname):
@@ -19,27 +24,30 @@ def load_predictor(fname):
     return predictor
 
 
-def load_test_data():
-    print('Load test data')
-    input_file = os.path.join(DAT_DIR, 'data_all.csv')
+def load_data(fname):
+    print('Load data')
+    input_file = os.path.join(DAT_DIR, fname)
     data_all = pd.read_csv(input_file)
-    X_test = data_all[data_all['SalePrice'].isnull()]
-    return X_test
+    return data_all
 
 
 if __name__ == '__main__':
-    fname = os.path.join(MODEL_DIR, 'boosted_regression_tree.pkl') # random_forest, xgboost,
+    fname = os.path.join(MODEL_DIR, 'boosted_regression_tree.pkl')  # random_forest, xgboost,
     predictor = load_predictor(fname)
 
-    X_test = load_test_data()
+    data = load_data('data_all.csv')
+    train = data[data['SalePrice'].notnull()]
+    test = data[data['SalePrice'].isnull()]
 
-    X_test['SalePrice'] = predictor.predict(X_test)
-    X_test.drop_duplicates(inplace=True)
+    predictor = predictor.refit(train)
+
+    test['SalePrice'] = predictor.predict_(test)
+    test.drop_duplicates(inplace=True)
     pred_file = os.path.join(RES_DIR, 'predictions.csv')
-    X_test.to_csv(pred_file, index=False)
+    test.to_csv(pred_file, index=False)
 
     print('make submission file')
     cols = ['Id', 'SalePrice']
-    submit = X_test[cols]
+    submit = test[cols]
     print('# rows in submit: {}'.format(submit.shape[0]))
     submit.to_csv(os.path.join(RES_DIR, 'submit.csv'), index=False)
