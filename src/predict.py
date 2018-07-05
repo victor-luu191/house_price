@@ -32,7 +32,7 @@ def load_data(fname):
 
 
 if __name__ == '__main__':
-    fname = os.path.join(MODEL_DIR, 'boosted_regression_tree.pkl')  # random_forest, xgboost,
+    fname = os.path.join(MODEL_DIR, 'boosted_regression_tree200.pkl')  # random_forest, xgboost,
     predictor = load_predictor(fname)
 
     data = load_data('data_all.csv')

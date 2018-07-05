@@ -85,8 +85,9 @@ class Trainer():
     def retrieve_predictions(self):
         predict_df = self.X_valid
         predict_df['SalePrice'] = self.y_valid
-        for predictor in self.models.keys():
-            predict_df['price_predict_{}'.format(predictor)] = self.predictions[predictor]
+        for model in self.models.keys():
+            predict_df['price_predict_{}'.format(model)] = self.predictions[model]
+            predict_df['{}_error'.format(rm_space(model))] = self.predictions[model] - predict_df['SalePrice']
 
         return predict_df
 
@@ -150,7 +151,7 @@ if __name__ == '__main__':
 
     print('Train tree-based models')
     error_df = pd.DataFrame()
-    for n_estimators in np.arange(100, 300, step=50):   # 150, 200 helps
+    for n_estimators in np.arange(100, 400, step=50):   # 150, 200 helps
         trainer = Trainer(train,
                           validation_ratio=0.1,
                           preprocess=dp,
