@@ -181,6 +181,7 @@ if __name__ == '__main__':
                  'SaleCondition',
                  ]
 
+    six_scale = {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0}
     quant_feats = ['Utilities',
                    'ExterQual',
                    'ExterCond',
@@ -191,8 +192,9 @@ if __name__ == '__main__':
                    # 'FireplaceQu',
                    'BsmtExposure',
                    'BsmtFinType1',
+                   'GarageQual',
+                   'GarageCond',
                    ]
-    six_scale = {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0}
     scorings = [{"AllPub": 4, "NoSewr": 3, "NoSeWa": 2, "ELO": 1, "NA": 0},
                 six_scale,
                 six_scale,
@@ -203,6 +205,8 @@ if __name__ == '__main__':
                 # six_scale,
                 {"Gd": 4, "Av": 3, "Mn": 2, "No": 1, "NA": 0},
                 {"GLQ": 6, "ALQ": 5, "BLQ": 4, "Rec": 3, "LwQ": 2, "Unf": 1, "NA": 0},
+                six_scale,
+                six_scale,
                 ]
 
     dp = DataPrep(cat_feats=cat_feats,
