@@ -83,6 +83,7 @@ class DataPrep():
                       '2ndFlrSF',
                       'WoodDeckSF',
                       'GrLivArea',
+                      'GarageArea',
                       ]
         room_feats = ['TotRmsAbvGrd',
                       ]
@@ -211,6 +212,7 @@ if __name__ == '__main__':
     data_all = dp.add_derived_feats(data_all)
     data_all = dp.encode_cat_feats(data_all)
     data_all = dp.quant_to_scores(data_all)
+
     dp.choose_features(data_all)
     data_all = dp.fillna_numeric_feats(data_all, value=0)
     dp.dump()

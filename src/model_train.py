@@ -40,7 +40,8 @@ class Trainer():
 
         lin_models = set_linear_models()
         tree_models = set_tree_models()
-        self.models = {**lin_models, **tree_models}  # join two dicts
+        self.models = tree_models
+        # self.models = {**lin_models, **tree_models}  # join two dicts
         self.predictions = dict()
 
     def benchmark(self, metrics_file, pred_file):
