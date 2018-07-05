@@ -39,7 +39,7 @@ class Trainer():
         self.X_valid, self.y_valid = X_valid, y_valid
 
         lin_models = set_linear_models()
-        tree_models = set_tree_models()
+        tree_models = set_tree_models(n_estimators=150)
         self.models = tree_models
         # self.models = {**lin_models, **tree_models}  # join two dicts
         self.predictions = dict()
@@ -98,10 +98,10 @@ def set_linear_models():
     return dict(zip(lin_names, lin_predictors))
 
 
-def set_tree_models():
-    gb_reg = GradientBoostingRegressor(random_state=SEED)
-    rf_reg = RandomForestRegressor(random_state=SEED)
-    xgb_reg = XGBRegressor()
+def set_tree_models(n_estimators=100):
+    gb_reg = GradientBoostingRegressor(random_state=SEED, n_estimators=n_estimators)
+    rf_reg = RandomForestRegressor(random_state=SEED, n_estimators=n_estimators)
+    xgb_reg = XGBRegressor(n_estimators=n_estimators)
 
     tree_predictors = [gb_reg, rf_reg, xgb_reg]
     tree_names = ['Boosted Regression Tree', 'Random Forest',
