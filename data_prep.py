@@ -77,6 +77,7 @@ class DataPrep():
     def query_numeric_features(self):
         numerical_feats = ['LotArea', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd',
                            'age_in_year', 'years_from_remodel',
+                           # 'GarageCars',
                            ]
         area_feats = ['TotalBsmtSF',
                       '1stFlrSF',
@@ -84,6 +85,8 @@ class DataPrep():
                       'WoodDeckSF',
                       'GrLivArea',
                       'GarageArea',
+                      # 'OpenPorchSF',
+                      # 'EnclosedPorch',
                       ]
         room_feats = ['TotRmsAbvGrd',
                       ]
@@ -179,6 +182,10 @@ if __name__ == '__main__':
                  'Neighborhood',
                  # 'SaleType',
                  'SaleCondition',
+                 # 'LandContour',
+                 # 'LandSlope',
+                 # 'LotConfig',
+                 'Condition1',
                  ]
 
     six_scale = {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "NA": 0}

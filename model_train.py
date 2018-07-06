@@ -151,7 +151,7 @@ if __name__ == '__main__':
 
     print('Train tree-based models')
     error_df = pd.DataFrame()
-    for n_estimators in np.arange(100, 400, step=50):   # 150, 200 helps
+    for n_estimators in np.arange(100, 550, step=50):   # 150, 200 helps
         trainer = Trainer(train,
                           validation_ratio=0.1,
                           preprocess=dp,
