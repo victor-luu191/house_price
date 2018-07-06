@@ -7,9 +7,9 @@ from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split
 from xgboost import XGBRegressor
 
-from data_prep import DataPrep
-from predict import Predictor
-from setting import *
+from src.data_prep import DataPrep
+from src.predict import Predictor
+from src.setting import *
 
 SEED = 1
 
@@ -17,8 +17,10 @@ SEED = 1
 class Trainer():
     def __init__(self, train, validation_ratio,
                  preprocess: DataPrep,
-                 stratify=None):
+                 stratify=None, n_estimators=100):
 
+        print('\t # estimators = {}'.format(n_estimators))
+        self.n_estimator = n_estimators
         # limit to only interested features
         features = preprocess.features
         self.features = features
@@ -39,25 +41,25 @@ class Trainer():
         self.X_valid, self.y_valid = X_valid, y_valid
 
         lin_models = set_linear_models()
-        tree_models = set_tree_models()
-        self.models = {**lin_models, **tree_models}  # join two dicts
+        tree_models = set_tree_models(n_estimators)
+        self.models = tree_models
+        # self.models = {**lin_models, **tree_models}  # join two dicts
         self.predictions = dict()
 
-    def benchmark(self, metrics_file, pred_file):
+    def benchmark(self, pred_file):
 
         errors = dict()
         for name, predictor in self.models.items():
             errors[name] = self.eval(predictor, name)
 
-        df_error = pd.DataFrame({'model': list(errors.keys()), 'mean_squared_log_error': list(errors.values())})
-        df_error.to_csv(metrics_file, index=False)
-        print('dumped errors to file {}'.format(metrics_file))
+        error_df = pd.DataFrame({'model': list(errors.keys()), 'mean_squared_log_error': list(errors.values())})
+        error_df['n_estimator'] = self.n_estimator
 
         predict_df = self.retrieve_predictions()
         predict_df.to_csv(pred_file, index=False)
         print('dumped predictions to file {}'.format(pred_file))
 
-        return None
+        return error_df
 
     def eval(self, model, name):
 
@@ -74,7 +76,8 @@ class Trainer():
             return np.nan
 
     def dump_predictor(self, model, name):
-        predictor_file = os.path.join(MODEL_DIR, '{}.pkl'.format(to_file_name(name)))
+        fname = '{}'.format(rm_space(name)) + str(self.n_estimator) + '.pkl'
+        predictor_file = os.path.join(MODEL_DIR, fname)
         predictor = Predictor(model, self.features)
         joblib.dump(predictor, predictor_file)
         print('dumped trained predictor {} to file {}'.format(name, predictor_file))
@@ -82,8 +85,9 @@ class Trainer():
     def retrieve_predictions(self):
         predict_df = self.X_valid
         predict_df['SalePrice'] = self.y_valid
-        for predictor in self.models.keys():
-            predict_df['price_predict_{}'.format(predictor)] = self.predictions[predictor]
+        for model in self.models.keys():
+            predict_df['price_predict_{}'.format(model)] = self.predictions[model]
+            predict_df['{}_error'.format(rm_space(model))] = self.predictions[model] - predict_df['SalePrice']
 
         return predict_df
 
@@ -97,10 +101,10 @@ def set_linear_models():
     return dict(zip(lin_names, lin_predictors))
 
 
-def set_tree_models():
-    gb_reg = GradientBoostingRegressor(random_state=SEED)
-    rf_reg = RandomForestRegressor(random_state=SEED)
-    xgb_reg = XGBRegressor()
+def set_tree_models(n_estimators=100):
+    gb_reg = GradientBoostingRegressor(random_state=SEED, n_estimators=n_estimators)
+    rf_reg = RandomForestRegressor(random_state=SEED, n_estimators=n_estimators)
+    xgb_reg = XGBRegressor(n_estimators=n_estimators)
 
     tree_predictors = [gb_reg, rf_reg, xgb_reg]
     tree_names = ['Boosted Regression Tree', 'Random Forest',
@@ -123,7 +127,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def to_file_name(s):
+def rm_space(s):
     return s.replace(' ', '_').lower()
 
 
@@ -145,11 +149,17 @@ if __name__ == '__main__':
     train = data_all[data_all['SalePrice'].notnull()]
     print('# rows in train data: {}'.format(train.shape[0]))
 
-    trainer = Trainer(train,
-                      validation_ratio=0.1,
-                      preprocess=dp)
+    print('Train tree-based models')
+    error_df = pd.DataFrame()
+    for n_estimators in np.arange(100, 550, step=50):   # 150, 200 helps
+        trainer = Trainer(train,
+                          validation_ratio=0.1,
+                          preprocess=dp,
+                          n_estimators=n_estimators)
 
-    metrics_file = os.path.join(RES_DIR, 'metrics.csv')  # 'metrics_{}.csv'.format(cat_feat)
-    pred_file = os.path.join(RES_DIR, 'validation.csv')  # 'validation_{}.csv'.format(cat_feat)
+        pred_file = os.path.join(RES_DIR, '{}_est_validation.csv'.format(n_estimators))
+        error_df = pd.concat([error_df, trainer.benchmark(pred_file)])
 
-    trainer.benchmark(metrics_file, pred_file)
+    metrics_file = os.path.join(RES_DIR, 'metrics.csv')
+    error_df.to_csv(metrics_file, index=False)
+    print('dumped errors to file {}'.format(metrics_file))
