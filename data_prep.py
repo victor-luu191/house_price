@@ -3,7 +3,15 @@ import os
 import numpy as np
 from sklearn.externals import joblib
 
-from src.setting import DAT_DIR
+from setting import DAT_DIR
+
+
+def list_numeric_columns(data):
+    return data.columns[np.where(data.dtypes != 'object')]
+
+
+def list_string_columns(data):
+    return data.columns[np.where(data.dtypes == 'object')]
 
 
 class DataPrep():
@@ -51,7 +59,7 @@ class DataPrep():
     def quant_to_scores(self, data):
         print('\n Converting quantitative text features to scores...')
         score_dict = dict(zip(self.quant_feats, self.scorings))
-        for tf in self.quant_feats: # score_dict.keys()
+        for tf in self.quant_feats:  # score_dict.keys()
             data = to_quantitative(text_feat=tf, df=data, scoring=score_dict[tf])
 
         return data
@@ -230,7 +238,6 @@ if __name__ == '__main__':
     ## End of preprocesses ==================
 
     print('Shape of data_all after all preprocessing: {}'.format(data_all.shape))
-
 
     fname = os.path.join(DAT_DIR, 'data_all.csv')
     data_all.to_csv(fname, index=False)
