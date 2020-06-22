@@ -1,2 +1,4 @@
 /house-prices-advanced-regression-techniques.zip
-.ipynb_checkpoints/EDA-checkpoint.ipynb
+.ipynb_checkpoints/
+*.csv
+*Copy*.ipynb
