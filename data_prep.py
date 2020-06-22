@@ -7,11 +7,11 @@ from setting import DAT_DIR
 
 
 def list_numeric_columns(data):
-    return data.columns[np.where(data.dtypes != 'object')]
+    return list(data.columns[np.where(data.dtypes != 'object')])
 
 
 def list_string_columns(data):
-    return data.columns[np.where(data.dtypes == 'object')]
+    return list(data.columns[np.where(data.dtypes == 'object')])
 
 
 class DataPrep():
@@ -125,9 +125,9 @@ class DataPrep():
         # self.check_na(copy)
         return copy
 
-    def check_na(self, df):
+    def check_na(self, data):
         # check if any NA left
-        na_count = [sum(df[ff].isnull()) for ff in self.features]
+        na_count = [sum(data[ff].isnull()) for ff in self.features]
         print('features still have NA')
         print(pd.DataFrame({'feature': self.features, 'na_count': na_count}).query('na_count > 0'))
 
@@ -174,7 +174,7 @@ def to_quantitative(text_feat, df, scoring):
 
     # print('\t Column {} has {} NAs, they will be filled by forward filling'.format(text_feat, n_na))
     # res[text_feat].fillna(method='ffill', inplace=True)
-    res['{}'.format(text_feat) + '_score'] = res[text_feat].apply(lambda form: scoring[form])
+    res[text_feat] = res[text_feat].apply(lambda form: scoring[form])
     return res
 
 
