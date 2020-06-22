@@ -3,7 +3,7 @@ import os
 import numpy as np
 from sklearn.externals import joblib
 
-from setting import DAT_DIR
+from src.setting import DAT_DIR
 
 
 def list_numeric_columns(data):
