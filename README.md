@@ -4,7 +4,7 @@ This repo contains source code of creating models for predicting house price in 
 
 ## What's in this for you?
 + The source codes are quite general and thus can be reused for other prediction projects.
-+ Features can be added incrementally to see their impact on prediction
++ Features are added incrementally so that their impact on prediction can be observed crystally clear
 + Post-train analysis are provided so that you can dive deeper
 
 ## Major classes
