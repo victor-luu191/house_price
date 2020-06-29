@@ -10,7 +10,7 @@ def list_numeric_columns(data):
     return list(data.columns[np.where(data.dtypes != 'object')])
 
 
-def list_string_columns(data):
+def list_categorical_columns(data):
     return list(data.columns[np.where(data.dtypes == 'object')])
 
 
