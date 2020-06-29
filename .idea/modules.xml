@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/../hacker_rank/.idea/hacker_rank.iml" filepath="$PROJECT_DIR$/../hacker_rank/.idea/hacker_rank.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/house_price.iml" filepath="$PROJECT_DIR$/.idea/house_price.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../rapp/.idea/rapp.iml" filepath="$PROJECT_DIR$/../rapp/.idea/rapp.iml" />
     </modules>
   </component>
 </project>
