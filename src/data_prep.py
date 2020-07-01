@@ -1,17 +1,38 @@
-import pandas as pd
 import os
+import pandas as pd
 import numpy as np
 from sklearn.externals import joblib
 
 from src.setting import DAT_DIR
 
 
-def list_numeric_columns(data):
-    return list(data.columns[np.where(data.dtypes != 'object')])
+def identify_numeric_columns(data, include=['int64', 'float64']):
+    numeric_columns = list(data.select_dtypes(include=include).columns)
+    return numeric_columns
 
 
-def list_categorical_columns(data):
-    return list(data.columns[np.where(data.dtypes == 'object')])
+def identify_nominal_columns(data: pd.DataFrame, include=['object', 'category']):
+    """Given a dataset, identify categorical columns.
+
+    Parameters:
+    -----------
+    dataset : a pandas dataframe
+    include : which column types to filter by; default: ['object', 'category'])
+
+    Returns:
+    --------
+    categorical_columns : a list of categorical columns
+
+    Example:
+    --------
+    >> df = pd.DataFrame({'col1': ['a', 'b', 'c', 'a'], 'col2': [3, 4, 2, 1]})
+    >> identify_nominal_columns(df)
+    ['col1']
+
+    """
+
+    nominal_columns = list(data.select_dtypes(include=include).columns)
+    return nominal_columns
 
 
 class DataPrep():
@@ -126,10 +147,10 @@ class DataPrep():
         return copy
 
     def check_na(self, data):
-        # check if any NA left
-        na_count = [sum(data[ff].isnull()) for ff in self.features]
-        print('features still have NA')
-        print(pd.DataFrame({'feature': self.features, 'na_count': na_count}).query('na_count > 0'))
+        # return the columns having NAs, sorted descendingly by their number of NAs
+        na_count = [sum(data[ff].isnull()) for ff in data.columns]
+        return pd.DataFrame({'column': data.columns, 'na_count': na_count}). \
+            query('na_count > 0').sort_values('na_count', ascending=False)
 
     def dump(self):
         # for persistence of features
