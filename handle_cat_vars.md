@@ -11,6 +11,8 @@ This note will talk about:
 
 This note will focus on practical aspects, so that readers can apply right away, theoritical discussion are not in scope.
 
+This note uses materical from [the-search-for-categorical-correlation](https://towardsdatascience.com/the-search-for-categorical-correlation-a1cf7f1888c9). My big thanks to the author.
+
 ## Ordinal variables
 
 + encoders: `LabelEncoder` in `sklearn`.
