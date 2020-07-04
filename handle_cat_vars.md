@@ -20,8 +20,8 @@ This note uses materical from [the-search-for-categorical-correlation](https://t
 ## Nominal variables
 
 Metrics for __association__ between _nominal_ variables _x_ and _y_.
-+ Cramer V: symmetry metrics
-+ Theil's U: aka uncertainty coefficient, is based on conditional entropy between _x_ and _y_ ---  or in human language, given the value of x, how many possible states does y have, and how often do they occur. 
++ [Cramer V](https://en.wikipedia.org/wiki/Cram%C3%A9r%27s_V) : symmetry metrics
++ [Theil's U](https://en.wikipedia.org/wiki/Uncertainty_coefficient) : aka uncertainty coefficient, is based on conditional entropy between _x_ and _y_ ---  or in human language, given the value of x, how many possible states does y have, and how often do they occur. 
 
 ### Implementation
 `dython` package
