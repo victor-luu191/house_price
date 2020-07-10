@@ -7,6 +7,9 @@ If you find the notebook useful, kindly give it a star.
 It contains:
 + an insightful EDA notebook
 + a `predictive model` notebook with decent examples of iterative model building via adding features incrementally
+
++ a decent notebook on feature engineering with effective ways to transform features and target to achieve better prediction performance. 
+
 + nice way/tool to measure relationship between categorical variable and continuous target
 + smart encoding for categorical variables
 
