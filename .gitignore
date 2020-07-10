@@ -3,3 +3,4 @@
 *.csv
 *Copy*.ipynb
 .idea/misc.xml
+*.html
