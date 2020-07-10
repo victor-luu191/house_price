@@ -2,7 +2,7 @@
 
 This repo contains source code of building models for predicting house price in [this Kaggle competition](https://www.kaggle.com/c/house-prices-advanced-regression-techniques). It illustrates nicely that careful feature selection can lead to very good prediction without having to resort to complicated models. Such a nice selection can easily help me climb more than 500 ranks on leaderboard.
 
-If you find the notebook useful, kindly give it a star.
+If you find this repo useful, __kindly give it a star__ :). Happy learning.
 
 It contains:
 + an insightful EDA notebook
