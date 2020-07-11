@@ -19,7 +19,7 @@ You will find:
 
 + general source codes which can be reused for other prediction projects.
 
-+ clear observation on the impact of feature engineering tasks on prediction. It is especially good for beginners to DS and ML.
++ clear observations on the impact of feature engineering tasks on prediction, which is especially useful for beginners to DS and ML.
 
 ## Major classes
 + `DataPrep`: for all data preprocessing such as filling NAs, onehot encoding categorical features, encoding quantitative features which are disguised as text
