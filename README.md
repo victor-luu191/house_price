@@ -4,19 +4,22 @@ This repo contains source code of building models for predicting house price in 
 
 If you find this repo useful, __kindly give it a star__ :). Happy learning.
 
-It contains:
+## What's in this for you?
+
+You will find:
 + an insightful EDA notebook
+
 + a `predictive model` notebook with decent examples of iterative model building via adding features incrementally
 
 + a decent notebook on feature engineering with effective ways to transform features and target to achieve better prediction performance. 
 
 + nice way/tool to measure relationship between categorical variable and continuous target
-+ smart encoding for categorical variables
 
-## What's in this for you?
-+ The source codes are general and thus can be reused for other prediction projects.
-+ Features are added incrementally so that their impact on prediction can be observed crystally clear. It is especially good for beginners to DS and ML.
-+ Post-train analysis are provided so that you can dive deeper
++ smart encoding schemes for categorical variables
+
++ general source codes which can be reused for other prediction projects.
+
++ clear observation on the impact of feature engineering tasks on prediction. It is especially good for beginners to DS and ML.
 
 ## Major classes
 + `DataPrep`: for all data preprocessing such as filling NAs, onehot encoding categorical features, encoding quantitative features which are disguised as text
